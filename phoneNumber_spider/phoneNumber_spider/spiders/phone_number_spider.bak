@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+__title__ = ""
+__author__ = "altamob"
+__mtime__ = "2016/9/2"
+# code is far away from bugs with the god animal protecting
+I love animals. They taste delicious.
+┏┓ ┏┓
+┏┛┻━━━┛┻┓
+┃ ☃ ┃
+┃ ┳┛ ┗┳ ┃
+┃ ┻ ┃
+┗━┓ ┏━┛
+┃ ┗━━━┓
+┃ 神兽保佑 ┣┓
+┃　永无BUG！ ┏┛
+┗┓┓┏━┳┓┏┛
+┃┫┫ ┃┫┫
+┗┻┛ ┗┻┛
+"""
+import sys
+
+from scrapy import Spider, Selector
+
+from phoneNumber_spider.items import PhoneumberSpiderItem
+
+reload(sys)  # Python2.5 初始化后会删除 sys.setdefaultencoding 这个方法，我们需要重新载入   
+sys.setdefaultencoding('utf-8')
+
+class PhoneNumberSpider(Spider):
+    name = "phoneSpider"
+    allowed_domains = ["diaosiso.com"]
+    start_urls = [
+        "http://www.diaosiso.com/mobile_number/henan/277.html"
+    ]
+    download_delay = 1
+    count=0
+
+    def parse(self, response):
+        sel = Selector(response)
+        sites = sel.xpath('//*[@class="container"]')
+        item = PhoneumberSpiderItem()
+        temp_prefix_name=[]
+        for site in sites:
+            prefix_name=site.xpath('h4/button/text()').extract()
+            if len(prefix_name)>0:
+                temp_prefix_name=prefix_name
+            prefix_list=site.xpath('ul/li/text()').extract()
+            item['prefix_name'] = [t.encode('utf-8') for t in temp_prefix_name]
+            item['prefix_list'] = [l.encode('utf-8').strip() for l in prefix_list]
+            if len(temp_prefix_name)>0 and len(prefix_list)>0:
+                yield  item
+        # self.count+=1
+        # if self.count==30:
+        #     return
+        # urls = sel.xpath('//*[@id="content-left"]/ul/li/a[@rel="nofollow"]/@href').extract()
+        # url = "http://www.qiushibaike.com" + urls[-1]
+        # yield Request(url, callback=self.parse)
